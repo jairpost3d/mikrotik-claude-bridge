@@ -1,17 +1,13 @@
 import os
 import requests
 from flask import Flask, request, jsonify
+import json
 
 app = Flask(__name__)
 
 CLAUDE_API_KEY = os.environ.get('CLAUDE_API_KEY')
 
-@app.route('/ask-claude', methods=['POST'])
-def ask_claude():
-    data = request.json
-    prompt = data.get('prompt', '')
-    context = data.get('context', '')
-
+def ask_claude(prompt, context):
     full_prompt = f"""
     Eres un experto en redes Mikrotik RouterOS.
     Tu tarea es devolver SOLO un JSON válido con una de estas acciones:
@@ -48,19 +44,28 @@ def ask_claude():
     except Exception as e:
         return jsonify({"action": "reply", "message": f"Error: {str(e)}"})
 
+# Endpoint para Flask (para pruebas locales)
+@app.route('/ask-claude', methods=['POST'])
+def ask_claude_endpoint():
+    data = request.json
+    prompt = data.get('prompt', '')
+    context = data.get('context', '')
+    return ask_claude(prompt, context)
+
 # Función handler OBLIGATORIA para Vercel
 def handler(request):
-    # Vercel pasa la solicitud como un objeto, necesitamos extraer los datos
     if request.method == 'POST':
-        # Obtener el cuerpo de la solicitud
-        body = request.body
-        import json
-        data = json.loads(body)
-        
-        prompt = data.get('prompt', '')
-        context = data.get('context', '')
-        
-        # Llamar a ask_claude con los datos extraídos
-        return ask_claude(prompt, context)
+        try:
+            body = request.body
+            if isinstance(body, bytes):
+                body = body.decode('utf-8')
+            data = json.loads(body)
+            
+            prompt = data.get('prompt', '')
+            context = data.get('context', '')
+            
+            return ask_claude(prompt, context)
+        except Exception as e:
+            return jsonify({"error": f"Error procesando solicitud: {str(e)}"}), 500
     else:
         return jsonify({"error": "Método no permitido"}), 405
