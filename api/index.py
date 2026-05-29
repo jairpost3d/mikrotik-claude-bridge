@@ -48,5 +48,6 @@ def ask_claude():
     except Exception as e:
         return jsonify({"action": "reply", "message": f"Error: {str(e)}"})
 
+# Función handler OBLIGATORIA para Vercel
 def handler(request):
     return ask_claude(request)
