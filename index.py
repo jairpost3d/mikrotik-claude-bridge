@@ -50,4 +50,17 @@ def ask_claude():
 
 # Función handler OBLIGATORIA para Vercel
 def handler(request):
-    return ask_claude()
+    # Vercel pasa la solicitud como un objeto, necesitamos extraer los datos
+    if request.method == 'POST':
+        # Obtener el cuerpo de la solicitud
+        body = request.body
+        import json
+        data = json.loads(body)
+        
+        prompt = data.get('prompt', '')
+        context = data.get('context', '')
+        
+        # Llamar a ask_claude con los datos extraídos
+        return ask_claude(prompt, context)
+    else:
+        return jsonify({"error": "Método no permitido"}), 405
