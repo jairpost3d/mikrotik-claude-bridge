@@ -1,13 +1,13 @@
-from flask import Flask, request, jsonify
-import requests
 import os
+import requests
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Obtener claves de las variables de entorno (seguro)
+# Obtener claves de las variables de entorno
 CLAUDE_API_KEY = os.environ.get('CLAUDE_API_KEY')
-MIKROTIK_IP = os.environ.get('MIKROTIK_IP', "192.168.11.1")
-MIKROTIK_USER = os.environ.get('MIKROTIK_USER', "claudeapi")
+MIKROTIK_IP = os.environ.get('MIKROTIK_IP', "192.168.88.1")
+MIKROTIK_USER = os.environ.get('MIKROTIK_USER', "admin")
 MIKROTIK_PASS = os.environ.get('MIKROTIK_PASS')
 
 @app.route('/ask-claude', methods=['POST'])
@@ -16,21 +16,15 @@ def ask_claude():
     prompt = data.get('prompt', '')
     context = data.get('context', '')
 
-    # Prompt optimizado para Claude
     full_prompt = f"""
     Eres un experto en redes Mikrotik RouterOS.
-    Tu tarea es analizar la solicitud y devolver SOLO un JSON válido con una de estas acciones:
-    1. {{ "action": "execute", "command": "/ip route print" }} (para ejecutar un comando)
-    2. {{ "action": "reply", "message": "La interfaz ether1 está caída." }} (para responder)
-    3. {{ "action": "fetch", "command": "/interface print" }} (para obtener datos)
+    Tu tarea es devolver SOLO un JSON válido con una de estas acciones:
+    1. {{ "action": "execute", "command": "/ip route print" }}
+    2. {{ "action": "reply", "message": "La interfaz ether1 está caída." }}
+    3. {{ "action": "fetch", "command": "/interface print" }}
     
     Contexto: {context}
     Solicitud: {prompt}
-    
-    Reglas:
-    - No uses markdown, solo JSON puro.
-    - Si el comando requiere autenticación, asume que Mikrotik ya está configurado.
-    - Si la solicitud es ambigua, devuelve un mensaje de respuesta pidiendo claridad.
     """
 
     headers = {
@@ -51,7 +45,6 @@ def ask_claude():
         
         if "content" in response_data and response_data["content"]:
             claude_text = response_data["content"][0]["text"]
-            # Intentar devolver el texto directamente si no es JSON
             return jsonify({"action": "reply", "message": claude_text})
         else:
             return jsonify({"action": "reply", "message": "Error: Sin respuesta de Claude"})
@@ -59,5 +52,6 @@ def ask_claude():
     except Exception as e:
         return jsonify({"action": "reply", "message": f"Error: {str(e)}"})
 
-if __name__ == '__main__':
-    app.run()
+# Handler para Vercel
+def handler(request):
+    return ask_claude(request)
