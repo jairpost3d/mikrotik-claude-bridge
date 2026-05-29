@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
+# Obtener claves de las variables de entorno
 CLAUDE_API_KEY = os.environ.get('CLAUDE_API_KEY')
 
 @app.route('/ask-claude', methods=['POST'])
@@ -14,7 +15,7 @@ def ask_claude():
 
     full_prompt = f"""
     Eres un experto en redes Mikrotik RouterOS.
-    Devuelve SOLO un JSON válido con una de estas acciones:
+    Tu tarea es devolver SOLO un JSON válido con una de estas acciones:
     1. {{ "action": "execute", "command": "/ip route print" }}
     2. {{ "action": "reply", "message": "La interfaz ether1 está caída." }}
     3. {{ "action": "fetch", "command": "/interface print" }}
@@ -49,5 +50,11 @@ def ask_claude():
         return jsonify({"action": "reply", "message": f"Error: {str(e)}"})
 
 # Función handler OBLIGATORIA para Vercel
+# Esta función es la que Vercel llama automáticamente
 def handler(request):
-    return ask_claude(request)
+    # Si la ruta es /ask-claude, llamamos a ask_claude
+    if request.path == '/ask-claude':
+        return ask_claude()
+    else:
+        # Si es otra ruta, devolver 404
+        return jsonify({"error": "Not Found"}), 404
