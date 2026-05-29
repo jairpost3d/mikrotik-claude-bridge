@@ -5,7 +5,7 @@ import os
 app = Flask(__name__)
 
 # Obtener claves de las variables de entorno (seguro)
-CLAUDE_API_KEY = "FILL_WITH_ENV_VAR"
+CLAUDE_API_KEY = os.environ.get('CLAUDE_API_KEY')
 MIKROTIK_IP = os.environ.get('MIKROTIK_IP', "192.168.11.1")
 MIKROTIK_USER = os.environ.get('MIKROTIK_USER', "claudeapi")
 MIKROTIK_PASS = os.environ.get('MIKROTIK_PASS')
